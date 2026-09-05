@@ -49,7 +49,7 @@ must supply it to atomically reserve each external model/embedding/rerank call.
 `app.ai.extraction.extract_text(content: bytes, mime_type: str) -> str` supports
 TXT/Markdown, textual PDF and DOCX only; other supported files return empty text.
 
-Settings names: AI_PROVIDER=fake|compatible, CHAT_BASE_URL, CHAT_MODEL,
+Settings names: AI_PROVIDER=fake|compatible, CHAT_BASE_URL, CHAT_MODEL, VISION_MODEL,
 CHAT_API_KEY, EMBEDDING_BASE_URL, EMBEDDING_MODEL, EMBEDDING_API_KEY,
 EMBEDDING_DIMENSION, MODEL_TIMEOUT_SECONDS, MAX_OUTPUT_TOKENS. Production fails
 startup if fake AI/dev auth is enabled. Fake is deterministic and explicitly
