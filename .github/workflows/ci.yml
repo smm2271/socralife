@@ -1,0 +1,52 @@
+name: verify
+on: [push, pull_request]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg16-trixie@sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b
+        env:
+          POSTGRES_USER: socralife
+          POSTGRES_PASSWORD: test-password
+          POSTGRES_DB: socralife_test
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U socralife" --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://socralife:test-password@localhost:5432/socralife_test
+      ENVIRONMENT: development
+      AI_PROVIDER: fake
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r backend/requirements.lock
+      - run: python scripts/generate_contracts.py --check
+      - run: python scripts/check_contract.py
+      - run: python -m pytest backend/tests -q
+      - run: python -m pytest tests -q
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: npm test -- --watch=false
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:e2e
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: frontend/test-results

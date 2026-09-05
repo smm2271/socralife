@@ -1,0 +1,141 @@
+name: socralife
+
+x-app: &app
+  image: socralife-api:${SOCRALIFE_TAG:-local}
+  build:
+    context: .
+    dockerfile: infra/api.Dockerfile
+  env_file: .env
+  environment:
+    STORAGE_ROOT: /data/files
+    DELETION_LEDGER_PATH: /data/deletions/deletions.jsonl
+    CLAMAV_HOST: clamav
+    CLAMAV_PORT: 3310
+  volumes:
+    - files:/data/files
+    - deletion_ledger:/data/deletions
+  init: true
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.6-pg16-trixie@sha256:c8483555ce48101872f888c1df8a895ff689d6c7c7a5f7ac266475f9dfe89e0b
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-socralife}
+      POSTGRES_DB: ${POSTGRES_DB:-socralife}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    <<: *app
+    command: [alembic, upgrade, head]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    command: [uvicorn, app.main:app, --host, 0.0.0.0, --port, "8000", --no-access-log]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    <<: *app
+    command: [python, -m, app.worker]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      clamav:
+        condition: service_healthy
+
+  clamav:
+    image: clamav/clamav:1.5.4@sha256:f0954d679017eb6d48221e2b2be3ac5457bf278a844f39b672376f55a085f591
+    environment:
+      CLAMD_CONF_StreamMaxLength: 60M
+      CLAMD_CONF_MaxFileSize: 60M
+      CLAMD_CONF_MaxScanSize: 200M
+      CLAMD_CONF_MaxRecursion: "12"
+      CLAMD_CONF_MaxFiles: "1000"
+      CLAMD_CONF_AlertExceedsMax: "yes"
+    volumes:
+      - clamav:/var/lib/clamav
+    healthcheck:
+      test: [CMD, clamdscan, --ping, "1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 10
+    restart: unless-stopped
+
+  frontend:
+    image: socralife-web:${SOCRALIFE_TAG:-local}
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  caddy:
+    image: caddy:2.11.4-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "${HTTP_BIND:-127.0.0.1:8080}:80"
+      - "${HTTPS_BIND:-127.0.0.1:8443}:443"
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    restart: unless-stopped
+
+  backup:
+    profiles: [ops]
+    build:
+      context: .
+      dockerfile: infra/backup.Dockerfile
+    env_file: .env
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-socralife}
+      PGDATABASE: ${POSTGRES_DB:-socralife}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - files:/files
+      - deletion_ledger:/deletions
+      - backup_cache:/root/.cache/restic
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: [/bin/sh]
+    command: [/ops/backup.sh]
+
+volumes:
+  postgres:
+  files:
+  deletion_ledger:
+  clamav:
+  caddy_data:
+  caddy_config:
+  backup_cache:

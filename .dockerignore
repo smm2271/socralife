@@ -1,0 +1,12 @@
+.git
+.worktrees
+.venv
+.data
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+**/.angular
+**/test-results
+.env
+**/*.db
