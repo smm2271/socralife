@@ -1,0 +1,10 @@
+﻿import Ajv from 'ajv';
+import standaloneCode from 'ajv/dist/standalone/index.js';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+const schema = JSON.parse(readFileSync(new URL('../../contracts/ui.schema.json', import.meta.url), 'utf8'));
+const ajv = new Ajv({allErrors:true, strict:false, code:{source:true, esm:true}});
+let output = '// Generated from contracts/ui.schema.json; do not edit.\n'+standaloneCode(ajv,ajv.compile(schema));
+output=output.replace(/const (\w+) = require\("ajv\/dist\/runtime\/ucs2length"\)\.default;/g, 'import $1 from "ajv/dist/runtime/ucs2length.js";');
+const path = fileURLToPath(new URL('../src/app/ui-validator.generated.js', import.meta.url));
+if(process.argv.includes('--check')){if(readFileSync(path,'utf8')!==output)throw new Error('UI validator drift: run npm run contracts');}else writeFileSync(path,output);
