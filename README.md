@@ -11,7 +11,7 @@ Copy `.env.example` to `.env`, keep `ENVIRONMENT=development`, and start Docker
 Desktop. Then run:
 
 ```powershell
-docker compose up --build
+.\scripts\deploy.ps1
 ```
 
 Open `http://localhost:8080`. Google OAuth is configured through the variables in
@@ -35,9 +35,10 @@ Build the frontend with `npm.cmd ci` followed by `npm.cmd run build` in
 Set a real HTTPS `APP_ORIGIN`, a 32-character `SECRET_KEY`, Google OIDC
 credentials and redirect URI, compatible chat/embedding endpoints, an S3 or
 durable file volume, and an encrypted Restic repository. Do not enable fake AI
-or development login. `scripts/deploy.sh` runs the backup, migration, health
-check, and rolling service startup sequence; the backup and restore scripts
-require the API and worker to be stopped while data is being replaced.
+or development login. See [docs/deployment-runbook.md](docs/deployment-runbook.md)
+for first deploy, production deploy, backup, restore, and health checks.
+PowerShell scripts are the supported Windows entry points; the `.sh` variants
+are for a Linux VM.
 
 The canonical interfaces are [contracts/openapi.yaml](contracts/openapi.yaml),
 [contracts/ui.schema.json](contracts/ui.schema.json), and
