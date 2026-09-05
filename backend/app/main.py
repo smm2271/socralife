@@ -112,13 +112,13 @@ def create_app(settings=None):
         return establish(db, user, response, settings)
     @app.get("/api/v1/auth/google")
     def google(db=Depends(db_dep)):
-        response = RedirectResponse("/")
+        response = RedirectResponse("/", status_code=302)
         response.headers["location"] = google_start(db, response, settings)
         return response
     @app.get("/api/v1/auth/google/callback")
     async def callback(request: Request, db=Depends(db_dep)):
         user = await google_finish(request, db, settings)
-        response = RedirectResponse(settings.public_url)
+        response = RedirectResponse(settings.public_url, status_code=302)
         establish(db, user, response, settings); response.delete_cookie("socralife_oauth")
         return response
     @app.post("/api/v1/auth/logout", status_code=204)
@@ -241,7 +241,7 @@ def create_app(settings=None):
         owned(db, user.id, id, "event"); r = owned(db, user.id, slot_id, "slot")
         if r.data["event_id"] != id: raise Problem(404, "NOT_FOUND", "找不到資料")
         db.delete(r)
-    @app.post("/api/v1/events/{id}/template", response_model=C.FileSlotPage)
+    @app.post("/api/v1/events/{id}/template", status_code=201, response_model=C.FileSlotPage)
     def apply_template(id: str, body: C.TemplateApply, user=Depends(actor), db=Depends(db_dep)):
         owned(db, user.id, id, "event")
         return {"items": [serialize(add_slot(db, user, id, s)) for s in body.slots], "next_cursor": None}
@@ -257,7 +257,7 @@ def create_app(settings=None):
         if request.method == "DELETE" and old: db.delete(old)
         db.flush(); return output(db, r)
 
-    @app.post("/api/v1/files", status_code=201, response_model=C.File)
+    @app.post("/api/v1/files", status_code=202, response_model=C.File)
     async def upload(file: UploadFile = File(...), user=Depends(actor), db=Depends(db_dep)):
         content = await file.read(settings.max_file_bytes + 1)
         if len(content) > settings.max_file_bytes: raise Problem(413, "FILE_TOO_LARGE", "檔案超過大小上限")
@@ -369,7 +369,7 @@ def create_app(settings=None):
         r = artifact(db, user, id)
         if not r: raise Problem(404, "NOT_FOUND", "尚未產生回顧")
         return serialize(r)
-    @app.post("/api/v1/sessions/{id}/artifact", response_model=C.Reflection)
+    @app.post("/api/v1/sessions/{id}/artifact", status_code=201, response_model=C.Reflection)
     def make_artifact(id: str, user=Depends(actor), db=Depends(db_dep)):
         session = owned(db, user.id, id, "session", True)
         existing = artifact(db, user, id)

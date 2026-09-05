@@ -127,13 +127,16 @@ async def generate(factory, settings, job):
         # Only whitelist validated UI, rewrite context IDs to persisted evidence IDs.
         from .ai.ui import validate_ui
         for component in ui:
-            if component["type"] == "hypothesis" and hypothesis:
+            if component["type"] == "hypothesis_card" and hypothesis:
                 component["hypothesis_id"] = hypothesis.id
-                if "version" in component: component["version"] = hypothesis.version
+                component["version"] = hypothesis.version
+            if component["type"] == "reflection_card" and reflection:
+                component["reflection_id"] = reflection.id
+                component["confirmed"] = False
             for field in ("evidence_refs", "counter_evidence_refs"):
                 if field in component: component[field] = refs(component[field])
-            if component["type"] == "evidence" and "evidence_id" in component and component["evidence_id"] in {c["id"] for c in context}:
-                component["evidence_id"] = refs([component["evidence_id"]])[0]
+            for child in component.get("items", []) + component.get("options", []):
+                if "evidence_refs" in child: child["evidence_refs"] = refs(child["evidence_refs"])
             validate_ui(component)
         questions = [c for c in ui if c["type"] == "question"]
         if session.data["consecutive_questions"] >= 3 and questions:
