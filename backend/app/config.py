@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     ai_provider: str = "fake"
     chat_base_url: str = "https://api.openai.com/v1"
     chat_model: str = ""
+    vision_model: str = ""
     chat_api_key: str = ""
     embedding_base_url: str = "https://api.openai.com/v1"
     embedding_model: str = ""

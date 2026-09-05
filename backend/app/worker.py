@@ -168,12 +168,19 @@ async def scan_file(factory, settings, job):
         change(db, r, r.version, {"status": "SCANNING"}, False); db.commit()
     content = storage(settings).get(job.resource_id)
     scan(content, settings)
-    from .ai.extraction import extract_text
+    from .ai.extraction import extract_text, visual_pages
     with factory() as db:
         r = db.get(Resource, job.resource_id)
         if not r or r.user_id != job.user_id: return
         if hashlib.sha256(content).hexdigest() != r.data["checksum"]: raise ValueError("file checksum mismatch")
-        extracted = extract_text(content, r.data["mime_type"])
+        mime = r.data["mime_type"]
+        extracted = extract_text(content, mime)
+        if not extracted.strip() and mime in ("application/pdf", "image/png", "image/jpeg"):
+            pages = visual_pages(content, mime)
+            if pages:
+                from .ai.service import AIService
+                vision = await AIService(settings).vision("Extract visible text, dates, entities, events and verifiable evidence. Return JSON with a concise text field. Do not invent unreadable content.", pages)
+                extracted = vision.get("text", "")[:200000]
         record = create(db, job.user_id, "record", {"type": "file", "title": r.data["filename"], "content": extracted[:200000], "occurred_at": None, "source_reflection_id": None})
         change(db, r, r.version, {"status": "CLEAN", "error": None, "record_id": record.id}, False); db.commit()
 

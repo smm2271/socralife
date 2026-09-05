@@ -12,6 +12,7 @@ Charge = Callable[[str], Awaitable[None]]
 class Provider(Protocol):
     async def complete(self, messages: list[dict], kind: str = "chat") -> dict: ...
     async def embed(self, texts: list[str]) -> list[list[float]]: ...
+    async def vision(self, prompt: str, images: list[dict]) -> dict: ...
 
 
 def setting(settings, key, default=None):
@@ -38,6 +39,9 @@ class FakeProvider:
             norm = math.sqrt(sum(x*x for x in vector)) or 1
             result.append([x/norm for x in vector])
         return result
+
+    async def vision(self, prompt, images):
+        return {"text": "", "pages": len(images), "provider": "fake"}
 
 
 class CompatibleProvider:
@@ -79,3 +83,17 @@ class CompatibleProvider:
         if [row["index"] for row in rows] != list(range(len(texts))):
             raise ValueError("Embedding response indices mismatch")
         return [row["embedding"] for row in rows]
+
+    async def vision(self, prompt, images):
+        content = [{"type": "text", "text": prompt}]
+        content.extend({"type": "image_url", "image_url": {"url": image["data_uri"]}} for image in images)
+        data = await self._post("CHAT", "/chat/completions", {
+            "model": setting(self.settings, "VISION_MODEL", setting(self.settings, "CHAT_MODEL")),
+            "messages": [{"role": "user", "content": content}],
+            "max_tokens": int(setting(self.settings, "MAX_OUTPUT_TOKENS", 2000)),
+            "response_format": {"type": "json_object"}, "temperature": 0.1,
+        }, "vision")
+        result = json.loads(data["choices"][0]["message"]["content"])
+        if not isinstance(result, dict) or not isinstance(result.get("text", ""), str):
+            raise ValueError("Expected vision JSON object with text")
+        return result

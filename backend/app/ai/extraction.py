@@ -1,4 +1,5 @@
-"""Bounded text extraction after quarantine scanning. No OCR or media inference."""
+"""Bounded text extraction and page rendering for vision analysis."""
+import base64
 from io import BytesIO
 from zipfile import ZipFile, BadZipFile
 
@@ -44,3 +45,21 @@ def extract_text(content: bytes, mime_type: str) -> str:
         lines.extend(cell.text for table in document.tables for row in table.rows for cell in row.cells)
         return "\n".join(lines)[:MAX_TEXT]
     return ""
+
+def visual_pages(content: bytes, mime_type: str, max_pages: int = 8) -> list[dict]:
+    """Render image/PDF pages as bounded data URIs for a vision provider."""
+    if len(content) > MAX_BYTES: raise ValueError("File exceeds visual limit")
+    mime = mime_type.split(";", 1)[0].strip().lower()
+    pages: list[bytes] = []
+    if mime in ("image/png", "image/jpeg"):
+        pages = [content]
+    elif mime == "application/pdf":
+        import fitz
+        document = fitz.open(stream=content, filetype="pdf")
+        if document.is_encrypted or document.page_count > 500: raise ValueError("PDF visual limits exceeded")
+        for page in list(document)[:max_pages]:
+            pixmap = page.get_pixmap(matrix=fitz.Matrix(1.4, 1.4), alpha=False)
+            pages.append(pixmap.tobytes("png"))
+    else:
+        return []
+    return [{"data_uri": "data:image/png;base64," + base64.b64encode(blob).decode("ascii")} for blob in pages[:max_pages]]

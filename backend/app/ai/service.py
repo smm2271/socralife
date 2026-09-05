@@ -81,6 +81,15 @@ class AIService:
             raise ValueError("Embedding dimension or values mismatch; rebuild index before changing model")
         return vectors
 
+    async def vision(self, prompt, images):
+        if not images or len(images) > 8:
+            raise ValueError("Vision request must contain 1 to 8 images")
+        if any(not isinstance(i, dict) or not str(i.get("data_uri", "")).startswith("data:image/") for i in images):
+            raise ValueError("Vision input must be data images")
+        result = await self.provider.vision(prompt[:4000], images)
+        result["model"] = setting(self.settings, "VISION_MODEL", setting(self.settings, "CHAT_MODEL", "fake"))
+        return result
+
     async def rerank(self, query, semantic, temporal):
         merged, seen = [], set()
         for i in range(20):

@@ -33,6 +33,7 @@ pydantic-settings==2.10.1
 pydantic_core==2.46.5
 Pygments==2.21.0
 PyJWT==2.10.1
+PyMuPDF==1.26.4
 pypdf==6.0.0
 pytest==8.4.2
 pytest-asyncio==1.2.0
@@ -44,7 +45,7 @@ referencing==0.37.0
 rpds-py==2026.6.3
 s3transfer==0.14.0
 six==1.17.0
--e git+https://github.com/smm2271/socralife.git@4adfe66648aae8617c17d58364247366a105c532#egg=socralife_backend&subdirectory=..\..\.worktrees\backend\backend
+-e git+https://github.com/smm2271/socralife.git@50e9780a02bd7addb797dd23b02f3684569f9a25#egg=socralife_backend&subdirectory=..\..\.worktrees\backend\backend
 SQLAlchemy==2.0.43
 starlette==0.47.3
 typing-inspection==0.4.4
