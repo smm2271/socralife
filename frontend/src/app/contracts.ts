@@ -3,7 +3,7 @@ export interface Error {
   code: string;
   message: string;
   trace_id: string;
-  details: Record<string, unknown>;
+  details: { [key: string]: unknown };
 }
 export interface User {
   id: string;
@@ -302,7 +302,7 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   run_id?: string | null;
-  ui: Array<Record<string, unknown>>;
+  ui: Array<{ [key: string]: unknown }>;
   complete: boolean;
 }
 export interface MessageCreate {
@@ -332,7 +332,7 @@ export interface StreamEvent {
   sequence: number;
   occurred_at: string;
   type: "stage.changed" | "text.delta" | "ui.ready" | "artifact.ready" | "run.completed" | "run.failed" | "run.cancelled";
-  payload: Record<string, unknown>;
+  payload: { [key: string]: unknown };
 }
 export interface ContextItem {
   id: string;

@@ -18,7 +18,7 @@ def tstype(s):
     t=s.get('type')
     if t=='array':return 'Array<'+tstype(s['items'])+'>'
     if t=='object' and 'properties' in s:return '{ '+ '; '.join(k+('' if k in s.get('required',[]) else '?')+': '+tstype(v) for k,v in s['properties'].items())+' }'
-    return {'string':'string','integer':'number','number':'number','boolean':'boolean','null':'null','object':'Record<string, unknown>'}.get(t,'unknown')
+    return {'string':'string','integer':'number','number':'number','boolean':'boolean','null':'null','object':'{ [key: string]: unknown }'}.get(t,'unknown')
 py=['# Generated; edit contracts/openapi.yaml instead.','from __future__ import annotations','from typing import Any, Literal','from pydantic import BaseModel, ConfigDict, Field','','class ContractModel(BaseModel):','    model_config = ConfigDict(extra="forbid")','']
 ts=['// Generated; edit contracts/openapi.yaml instead.']
 for name,s in schemas.items():
