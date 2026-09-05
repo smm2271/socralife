@@ -4,7 +4,7 @@ from datetime import datetime, date, timedelta, timezone
 from sqlalchemy import select, delete, text
 from .config import Settings
 from .db import database
-from .models import User, Resource, Job, SearchDocument, StreamEvent, now
+from .models import User, Resource, Job, SearchDocument, StreamEvent, now, uid
 from .domain import owned, rows, create, change, reserve, event, serialize, purge_user, Problem
 from .storage import storage, scan
 
@@ -34,18 +34,23 @@ async def index_resource(factory, settings, job):
     with factory() as db:
         r = db.get(Resource, job.resource_id)
         if not r or r.user_id != job.user_id: return
-        db.execute(delete(SearchDocument).where(SearchDocument.source_id == r.id)); db.commit()
-        if not indexable(r, db): return
+        if not indexable(r, db):
+            db.execute(delete(SearchDocument).where(SearchDocument.source_id == r.id)); db.commit(); return
         version, content = r.version, text_content(r)
         context = {"id": r.id, "source_id": r.id, "source_type": r.kind, "source_version": r.version, "title": r.data.get("title") or r.data.get("question") or r.data.get("statement", "")[:100], "excerpt": content[:5000], "occurred_at": r.data.get("occurred_at") or r.data.get("started_at"), "confirmed": r.kind == "insight" or bool(r.data.get("confirmed")), "status": r.data.get("status", "ORIGINAL"), "counter_evidence": False}
     ai = service(settings, factory)
-    vectors = await ai.embed([content or context["title"]])
+    full_text = content or context["title"]
+    chunks = [full_text[start:start+5000] for start in range(0, len(full_text), 4500)] or [""]
+    vectors = await ai.embed(chunks)
     identity = json.dumps(ai.embedding_identity, sort_keys=True)
     with factory() as db:
         r = db.get(Resource, job.resource_id)
         if not r or r.version != version or not indexable(r, db): return
         db.execute(delete(SearchDocument).where(SearchDocument.source_id == r.id))
-        db.add(SearchDocument(user_id=r.user_id, source_id=r.id, source_version=version, identity=identity, embedding=vectors[0], context=context)); db.commit()
+        for chunk, vector in zip(chunks, vectors):
+            doc_id = uid()
+            db.add(SearchDocument(id=doc_id, user_id=r.user_id, source_id=r.id, source_version=version, identity=identity, embedding=vector, context=dict(context, id=doc_id, excerpt=chunk)))
+        db.commit()
 
 async def retrieve(factory, settings, user_id, message, ai):
     identity = json.dumps(ai.embedding_identity, sort_keys=True)
