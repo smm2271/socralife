@@ -12,8 +12,14 @@ if ($values['SECRET_KEY'].Length -lt 32) { throw 'SECRET_KEY must contain at lea
 $environment = $values['ENVIRONMENT']
 if ($Production -or $environment -eq 'production') {
   if ($values['ENABLE_DEV_AUTH'] -eq 'true') { throw 'ENABLE_DEV_AUTH=true is forbidden in production.' }
-  if ($values['AI_PROVIDER'] -eq 'fake') { throw 'AI_PROVIDER=fake is forbidden in production.' }
-  Require 'GOOGLE_CLIENT_ID'; Require 'GOOGLE_CLIENT_SECRET'; Require 'CHAT_MODEL'; Require 'CHAT_API_KEY'; Require 'EMBEDDING_MODEL'; Require 'EMBEDDING_API_KEY'; Require 'RESTIC_REPOSITORY'; Require 'RESTIC_PASSWORD'
+  if ($values['AI_PROVIDER'] -ne 'compatible') { throw 'Production requires AI_PROVIDER=compatible.' }
+  if ($values['STORAGE_PROVIDER'] -ne 'local') { throw 'This deployment requires STORAGE_PROVIDER=local.' }
+  Require 'APP_ORIGIN'; Require 'GOOGLE_CLIENT_ID'; Require 'GOOGLE_CLIENT_SECRET'; Require 'GOOGLE_REDIRECT_URI'; Require 'CHAT_BASE_URL'; Require 'CHAT_MODEL'; Require 'CHAT_API_KEY'; Require 'EMBEDDING_BASE_URL'; Require 'EMBEDDING_MODEL'; Require 'EMBEDDING_API_KEY'
   if (-not $values['APP_ORIGIN'].StartsWith('https://')) { throw 'Production APP_ORIGIN must use https://.' }
+  if (-not $values['GOOGLE_REDIRECT_URI'].StartsWith('https://')) { throw 'Production GOOGLE_REDIRECT_URI must use https://.' }
+  if ([string]::IsNullOrWhiteSpace($values['RESTIC_REPOSITORY']) -or [string]::IsNullOrWhiteSpace($values['RESTIC_PASSWORD'])) {
+    if ($values['ALLOW_UNBACKED_PRODUCTION'] -ne 'true') { throw 'Production requires Restic credentials, or explicit ALLOW_UNBACKED_PRODUCTION=true.' }
+    Write-Warning 'Production has no remote backup; loss of this server or its Docker volumes can permanently destroy all data.'
+  }
 }
 Write-Host "Environment validation passed ($environment)."

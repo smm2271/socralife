@@ -14,10 +14,10 @@ Desktop. Then run:
 .\scripts\deploy.ps1
 ```
 
-Open `http://localhost:8080`. Google OAuth is configured through the variables in
-`.env`; for an isolated local smoke test, enable the explicit development login
-and visit `http://localhost:8080/?dev=1`. Development login is rejected when
-`ENVIRONMENT=production`.
+The Compose stack does not publish a host port. It expects an existing Nginx
+Proxy Manager installation on the external `npm_default` Docker network. Point
+the proxy host at `socralife-caddy:80`. Google OAuth is configured through the
+variables in `.env`; development login is rejected when `ENVIRONMENT=production`.
 
 Run the API tests without Docker with the project virtual environment:
 
