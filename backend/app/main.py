@@ -216,7 +216,8 @@ def create_app(settings=None):
         if file_id:
             f = owned(db, user.id, file_id, "file")
             if f.data["status"] != "CLEAN": raise Problem(409, "FILE_NOT_CLEAN", "檔案尚未通過掃描")
-            data["status"] = "AVAILABLE"
+            if data.get("status") not in ("NOT_REQUIRED", "ARCHIVED"):
+                data["status"] = "AVAILABLE"
         elif data.get("status") == "AVAILABLE": raise Problem(422, "FILE_REQUIRED", "可用狀態必須連結檔案")
         return data
     def add_slot(db, user, event_id, body):

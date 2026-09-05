@@ -79,7 +79,7 @@ def remove(db, r, settings):
             if source: remove(db, source, settings)
         for slot in rows(db, r.user_id, "slot"):
             if slot.data.get("linked_file_id") == r.id:
-                change(db, slot, slot.version, {"linked_file_id": None, "status": "MISSING"}, False)
+                change(db, slot, slot.version, {"linked_file_id": None, "status": "MISSING" if slot.data["status"] == "AVAILABLE" else slot.data["status"]}, False)
     if r.kind == "event":
         for slot in rows(db, r.user_id, "slot"):
             if slot.data["event_id"] == r.id: db.delete(slot)
