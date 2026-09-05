@@ -9,8 +9,6 @@
 
 # Node modules and dependency files
 /node_modules/
-/package-lock.json
-/yarn.lock
 
 # Environment files
 /.env
@@ -26,3 +24,19 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Python and local state
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
+.data/
+*.db
+.worktrees/
+test-results/
+playwright-report/
+!.env.example

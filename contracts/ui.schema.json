@@ -1,0 +1,413 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UIComponent",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "type": {
+          "const": "text"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 20000
+        }
+      },
+      "required": [
+        "schema_version",
+        "type",
+        "text"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "type": {
+          "const": "question"
+        },
+        "text": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "target_uncertainty": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "type",
+        "text",
+        "purpose",
+        "target_uncertainty"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "type": {
+          "const": "choice_cards"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "label"
+            ]
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "type",
+        "choices"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "type": {
+          "const": "evidence_card"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "type",
+        "evidence_refs",
+        "text"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "type": {
+          "const": "hypothesis_card"
+        },
+        "hypothesis_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "version": {
+          "type": "integer"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "counter_evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "uncertainty": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "type",
+        "hypothesis_id",
+        "statement",
+        "evidence_refs",
+        "uncertainty"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "type": {
+          "const": "reflection_card"
+        },
+        "reflection_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "question": {
+          "type": "string"
+        },
+        "current_understanding": {
+          "type": "string"
+        },
+        "unknowns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confirmed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema_version",
+        "type",
+        "question",
+        "current_understanding",
+        "unknowns",
+        "actions",
+        "confirmed"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "type": {
+          "const": "timeline"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "date": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "evidence_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "confirmed": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "label",
+              "date",
+              "evidence_refs",
+              "confirmed"
+            ]
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "type",
+        "items"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "type": {
+          "const": "comparison"
+        },
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "evidence_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "confirmed": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "label",
+              "values",
+              "evidence_refs",
+              "confirmed"
+            ]
+          }
+        },
+        "time_range": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "type",
+        "dimensions",
+        "options",
+        "time_range"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "type": {
+          "const": "action_card"
+        },
+        "action_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "review_prompt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "type",
+        "text",
+        "purpose",
+        "review_prompt"
+      ]
+    }
+  ]
+}
