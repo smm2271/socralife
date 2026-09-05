@@ -1,0 +1,18 @@
+﻿import {test,expect,Page} from '@playwright/test';
+const user={id:'u',name:'探索者',email:'demo@example.test',csrf_token:'token',ai_mode:'fake'};
+async function mock(page:Page){
+ let records:unknown[]=[];
+ await page.route('**/api/v1/**',async route=>{const request=route.request();const url=new URL(request.url());const path=url.pathname;let body:unknown={items:[],next_cursor:null};
+ if(path.endsWith('/me'))body=user;
+ if(path.endsWith('/records')&&request.method()==='POST'){expect(request.headers()['x-csrf-token']).toBe('token');body={...request.postDataJSON(),id:'r1',version:1,created_at:'2026-09-05T00:00:00Z',updated_at:'2026-09-05T00:00:00Z',user_id:'u'};records.push(body);}
+ else if(path.endsWith('/records'))body={items:records,next_cursor:null};
+ if(path.endsWith('/sessions')&&request.method()==='POST')body={id:'s1',title:'探索測試',stage:'UNDERSTAND',version:1,created_at:'2026-09-05T00:00:00Z',updated_at:'2026-09-05T00:00:00Z'};
+ if(path.endsWith('/messages')&&request.method()==='POST'){expect(request.headers()['idempotency-key']).toBeTruthy();body={message_id:'m1',run_id:'run1',stream_url:'/api/v1/runs/run1/events'};}
+ if(path.endsWith('/runs/run1/events')){await route.fulfill({contentType:'text/event-stream',body:'data: '+JSON.stringify({schema_version:'1.0',event_id:'e1',run_id:'run1',sequence:1,occurred_at:'2026-09-05T00:00:00Z',type:'run.completed',payload:{}})+'\n\n'});return;}
+ await route.fulfill({contentType:'application/json',body:JSON.stringify(body)});
+ });
+}
+async function navigate(page:Page,label:string){const menu=page.getByRole('button',{name:'切換導覽'});if(await menu.isVisible())await menu.click();await page.getByRole('navigation').getByRole('button',{name:label}).click();}
+test('private workspace, record CRUD creation, responsive layout',async({page})=>{await mock(page);await page.goto('/');await expect(page.getByRole('heading',{name:'給自己一點空間。'})).toBeVisible();await expect(page.getByText('測試模型 · 非真實 AI')).toBeVisible();await navigate(page,'生活紀錄 收集真實的片刻');await page.getByRole('button',{name:'＋ 新增紀錄'}).click();await page.getByLabel('標題',{exact:true}).fill('Hackathon 的一天');await page.getByLabel('內容',{exact:true}).fill('我發現自己喜歡整理團隊的想法。');await page.getByRole('button',{name:'保存',exact:true}).click();await expect(page.getByRole('heading',{name:'Hackathon 的一天'})).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);await page.screenshot({path:'test-results/workspace-'+test.info().project.name+'.png',fullPage:true});});
+test('chat submits once and handles terminal stream',async({page})=>{await mock(page);await page.goto('/');await page.getByLabel('想探索的問題').fill('我想理解最近的選擇');await page.getByRole('button',{name:'開始聊聊'}).click();await expect(page.getByRole('button',{name:'開始聊聊'})).toBeVisible();await expect(page.getByRole('alert')).toHaveCount(0);});
+test('server error stays visible and does not claim save success',async({page})=>{await mock(page);await page.route('**/api/v1/records',async route=>{if(route.request().method()==='POST'){await route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({code:'VERSION_CONFLICT',message:'版本已更新',trace_id:'trace-test'})});}else await route.fallback();});await page.goto('/');await navigate(page,'生活紀錄 收集真實的片刻');await page.getByRole('button',{name:'＋ 新增紀錄'}).click();await page.getByLabel('標題',{exact:true}).fill('Test');await page.getByLabel('內容',{exact:true}).fill('Content');await page.getByRole('button',{name:'保存',exact:true}).click();await expect(page.getByRole('alert')).toContainText('版本已更新');await expect(page.getByRole('dialog')).toBeVisible();});

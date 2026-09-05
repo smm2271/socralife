@@ -10,7 +10,7 @@ import { ChartComponent } from './chart';
 @Component({selector:'app-root',standalone:true,imports:[CommonModule,FormsModule,MatButtonModule,MatProgressBarModule,UiComponent,ChartComponent],templateUrl:'./app.html'})
 export class AppComponent implements OnInit,OnDestroy {
   api=inject(Api);private cdr=inject(ChangeDetectorRef);view='explore';busy=false;ready=false;error='';notice='';menu=false;
-  nav=[{id:'explore',icon:'◎',label:'自我探索',sub:'和自己好好聊聊'},{id:'chronicle',icon:'?',label:'我的歷程',sub:'每段經歷，都有位置'},{id:'records',icon:'?',label:'生活紀錄',sub:'收集真實的片刻'},{id:'blogs',icon:'?',label:'我的文章',sub:'把理解留給未來'},{id:'insights',icon:'◇',label:'理解與證據',sub:'讓想法有跡可循'},{id:'reflections',icon:'?',label:'探索成果',sub:'走過的思考，值得留下'},{id:'actions',icon:'↗',label:'行動與回顧',sub:'從一小步開始'}];
+  nav=[{id:'explore',icon:'◎',label:'自我探索',sub:'和自己好好聊聊'},{id:'chronicle',icon:'\u25f7',label:'我的歷程',sub:'每段經歷，都有位置'},{id:'records',icon:'\u25a4',label:'生活紀錄',sub:'收集真實的片刻'},{id:'blogs',icon:'\u270e',label:'我的文章',sub:'把理解留給未來'},{id:'insights',icon:'◇',label:'理解與證據',sub:'讓想法有跡可循'},{id:'reflections',icon:'\u2727',label:'探索成果',sub:'走過的思考，值得留下'},{id:'actions',icon:'↗',label:'行動與回顧',sub:'從一小步開始'}];
   devVisible=new URLSearchParams(location.search).get('dev')==='1';devEmail='demo@example.test';
   records:C.Record[]=[];events:C.Event[]=[];templates:C.EventTemplate[]=[];files:C.File[]=[];insights:C.Insight[]=[];reflections:C.Reflection[]=[];actions:C.Action[]=[];sessions:C.Session[]=[];messages:C.Message[]=[];evidences:C.Evidence[]=[];observations:C.Observation[]=[];usage:C.Usage|null=null;
   recordEditor:(C.RecordCreate & {id?:string;version?:number})|null=null;eventEditor:(C.EventCreate & {id?:string;version?:number})|null=null;

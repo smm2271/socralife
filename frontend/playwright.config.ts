@@ -1,0 +1,2 @@
+﻿import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({testDir:'./e2e',fullyParallel:true,reporter:'list',use:{baseURL:'http://127.0.0.1:4201',trace:'retain-on-failure'},webServer:{command:'npx ng serve --host 127.0.0.1 --port 4201',url:'http://127.0.0.1:4201',reuseExistingServer:!process.env['CI'],timeout:120000},projects:[{name:'desktop',use:{...devices['Desktop Chrome']}},{name:'mobile',use:{...devices['Pixel 7']}}]});
